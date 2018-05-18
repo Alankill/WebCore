@@ -21,6 +21,12 @@ namespace WebSite
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //services.AddDbContext<SqlDBContext>();
+            //services.AddScoped<DbContext, SqlDBContext>();
+
+            services.AddApplicationInterface();
+            services.AddRepositotyServiceCollectionExtensions();
+
             services.AddMvc();
         }
 
