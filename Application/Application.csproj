@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\EntityFramework\Web.EntityFramework.csproj" />
   </ItemGroup>
 
   <ItemGroup>

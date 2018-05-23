@@ -6,7 +6,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Core.Domain;
-using Core.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -18,18 +17,17 @@ namespace Web.EntityFramework
     /// <typeparam name="TDbContext">DbContext which contains <typeparamref name="TEntity"/>.</typeparam>
     /// <typeparam name="TEntity">Type of the Entity for this repository</typeparam>
     /// <typeparam name="TPrimaryKey">Primary key of the entity</typeparam>
-    public class EfRepository<TEntity, TPrimaryKey> : IRepository<TEntity, TPrimaryKey> where TEntity : class, IEntity<TPrimaryKey>
+    public class EfRepository<TEntity> : IRepository<TEntity> where TEntity : class//,IEntity<>
     {
-        protected DbContext Context;
-        protected DbSet<TEntity> Table;
+        private DbContext Context;
+        public DbSet<TEntity> Table { get;private set; }
         public EfRepository(DbContext _context)
         {
             Context = _context;
             Table = _context.Set<TEntity>();
         }
-
-
-        #region
+    
+        
         public IQueryable<TEntity> GetAll()
         {
             return Table;
@@ -50,38 +48,31 @@ namespace Web.EntityFramework
 
             return query;
         }
-        public async Task<List<TEntity>> ToListAsync(IQueryable<TEntity> list)
-        {
-            return await list.ToListAsync<TEntity>();
-        }
-
 
         public async Task<List<TEntity>> GetAllListAsync()
         {
-            return await GetAll().ToListAsync();
+            return await GetAll().ToListAsync().ConfigureAwait(false);
         }
-
         public  async Task<List<TEntity>> GetAllListAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await GetAll().Where(predicate).ToListAsync();
+            return await GetAll().Where(predicate).ToListAsync().ConfigureAwait(false);
         }
-
-        public List<TEntity> Page<T>(int pagenum, int pagesize, Expression<Func<TEntity, bool>> where, Expression<Func<TEntity, T>> order, bool isDesc, out int totalcount, out int totalpagecount)
+        public async Task<(List<TEntity> List,int TotalCount,int TotalPage)> Page<T>(int pagenum, int pagesize, Expression<Func<TEntity, bool>> where, Expression<Func<TEntity, T>> order, bool isDesc)
         {
-            totalcount = Table.Count(where);
-            totalpagecount = totalcount / pagesize + (totalcount % pagesize == 0 ? 0 : 1);
+            List<TEntity> list;
+            var totalcount = await Table.CountAsync(where);
+            var totalpagecount = totalcount / pagesize + (totalcount % pagesize == 0 ? 0 : 1);
             if (isDesc)
             {
-                return Table.Where(where).OrderByDescending(order).Skip((pagenum - 1) * pagesize).Take(pagesize).ToList();
+                list=await Table.Where(where).OrderByDescending(order).Skip((pagenum - 1) * pagesize).Take(pagesize).ToListAsync();
 
             }
             else
             {
-                return Table.Where(where).OrderBy(order).Skip((pagenum - 1) * pagesize).Take(pagesize).ToList();
+                list = await Table.Where(where).OrderBy(order).Skip((pagenum - 1) * pagesize).Take(pagesize).ToListAsync();
             }
-
+            return (List:list,TotalCount:totalcount,TotalPage:totalpagecount);
         }
-
 
         public async Task<TEntity> Find(object id)
         {
@@ -91,7 +82,6 @@ namespace Web.EntityFramework
         {
             return await GetAll().SingleAsync(predicate);
         }
-
         public  async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {
             return await GetAll().FirstOrDefaultAsync(predicate);
@@ -101,7 +91,6 @@ namespace Web.EntityFramework
         {
             return (Table.Add(entity)).Entity;
         }
-
         public void  AddRange(params TEntity[] entities)
         {
               Table.AddRange(entities);
@@ -109,18 +98,17 @@ namespace Web.EntityFramework
 
         public  TEntity Update(TEntity entity)
         {
-            EntityEntry ee=AttachIfNot(entity);
+            EntityEntry ee = Context.Entry<TEntity>(entity);
             ee.State = EntityState.Modified;
             return entity;
         }
-
-        public void Update(TEntity entity, string properties)
+        public void Update(TEntity entity,params Expression<Func<TEntity,object>>[] properties)
         {
-            EntityEntry ee = AttachIfNot(entity);
-            string[] arr = properties.Split(",");
-            foreach (string p in arr)
+            EntityEntry ee = Context.Entry<TEntity>(entity);
+            foreach (var property in properties)
             {
-                ee.Property(p).IsModified = true;
+                var propertyName = property.ReturnType.Name;
+                ee.Property(propertyName).IsModified = true;
             }
         }
 
@@ -141,52 +129,17 @@ namespace Web.EntityFramework
                 }
             }
         }
-
         public void Delete(TEntity entity)
         {
             if (entity is IIsDelete)
             {
                 ((IIsDelete)entity).IsDelete = true;
-                Table.Attach(entity).Property("IsDelete").IsModified = true;
+                Context.Entry<TEntity>(entity).Property("IsDelete").IsModified = true;
             }
             else
             {
-                AttachIfNot(entity);
-                Table.Remove(entity);
+                Context.Entry<TEntity>(entity).State = EntityState.Deleted;
             }
         }
-
-        public  async Task<int> CountAsync()
-        {
-            return await GetAll().CountAsync();
-        }
-        public  async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate)
-        {
-            return await GetAll().Where(predicate).CountAsync();
-        }
-        public  async Task<long> LongCountAsync()
-        {
-            return await GetAll().LongCountAsync();
-        }
-        public  async Task<long> LongCountAsync(Expression<Func<TEntity, bool>> predicate)
-        {
-            return await GetAll().Where(predicate).LongCountAsync();
-        }
-
-
-        public async Task SaveChangesAsync()
-        {
-            await Context.SaveChangesAsync();
-        }
-        protected virtual EntityEntry AttachIfNot(TEntity entity)
-        {
-            EntityEntry entry = Context.ChangeTracker.Entries().FirstOrDefault(ent => ent.Entity == entity);
-            if (entry != null)
-            {
-                return entry;
-            }
-            return Table.Attach(entity);
-        }
-        #endregion
     }
 }

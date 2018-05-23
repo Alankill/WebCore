@@ -1,10 +1,8 @@
-﻿using Application.Tasks.DTO;
-using System;
+﻿using Application.DTO.Tasks;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Tasks
+namespace Application.IAppService
 {
     public interface ITaskAppService:IApplicationService
     {

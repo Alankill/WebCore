@@ -4,29 +4,24 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Web.EntityFramework;
+using Web.EntityFramework.Uow;
 
 namespace WebSite
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
-        public IConfiguration Configuration { get; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //services.AddDbContext<SqlDBContext>();
-            //services.AddScoped<DbContext, SqlDBContext>();
-
-            services.AddApplicationInterface();
-            services.AddRepositotyServiceCollectionExtensions();
-
+            services.AddDbContext<SqlDbContext>();
+            services.AddScoped<DbContext, SqlDbContext>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddApplications();
+            services.AddRepositories();
             services.AddMvc();
         }
 
