@@ -17,9 +17,4 @@
     <ProjectReference Include="..\EntityFramework\Web.EntityFramework.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ViewModel\Tasks\" />
-    <Folder Include="Views\Tasks\" />
-  </ItemGroup>
-
 </Project>

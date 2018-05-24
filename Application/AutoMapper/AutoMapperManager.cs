@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using Application.DTO.Tasks;
+using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,7 +22,7 @@ namespace Application.AutoMapper
         {
             var config = new MapperConfiguration(m =>
             {
-
+                m.CreateMap<Core.Domain.Tasks.Task,TaskListOutput>();
             });
 
             Mapper = config.CreateMapper();

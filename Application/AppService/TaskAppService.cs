@@ -1,6 +1,7 @@
 ﻿using Application.DTO.Tasks;
 using Application.IAppService;
-using AutoMapper;
+using Core.Extensions;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Web.EntityFramework;
@@ -18,7 +19,7 @@ namespace Application.AppService
 
         public async Task<List<TaskListOutput>> GetAll(TaskListInput input)
         {
-            var tasks = await _taskRepository.GetAllListAsync();
+            var tasks = await _taskRepository.GetAll().WhereIf(input!=null,m=>m.State==input.State).ToListAsync();
             return Mapper.Map<List<TaskListOutput>>(tasks);
         }
     }

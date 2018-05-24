@@ -7,6 +7,7 @@ namespace Application.DTO.Tasks
     {
         public int ID { get; set; }
         public string Title { get; set; }
+        public string Description { get; set; }
         public TaskState State { get; set; }
         public DateTime CreatDate { get; set; }
         public string AssignedPersonName { get; set; }

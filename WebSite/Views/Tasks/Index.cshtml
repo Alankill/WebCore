@@ -1,0 +1,19 @@
+﻿@model WebSite.ViewModel.Tasks.TaskIndexVM
+@{
+    ViewData["Title"] = "任务列表";
+}
+
+<div>
+
+
+</div>
+<div>
+    <ul>
+        @foreach (var task in Model.Tasks)
+        {
+            <li>
+                @task.Title|@task.Description|@(task?.AssignedPersonName??"无")
+            </li>
+        }
+    </ul>
+</div>
